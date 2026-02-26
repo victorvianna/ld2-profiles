@@ -68,7 +68,6 @@ function updateChart() {
 
   // Configure the slider based on the 98th percentile for better usability.
   const slider = document.getElementById('threshold');
-  const thresholdVal = document.getElementById('threshold-val');
   slider.max = p98Ratio ? Math.ceil(p98Ratio * 1.5) : 100;
   slider.step = slider.max / 200;
 
@@ -96,39 +95,70 @@ async function loadData() {
   updateChart();
 }
 
+function updateURLHash() {
+  const profile = document.getElementById('file-select').value;
+  const metric = document.getElementById('metric-select').value;
+  const threshold = document.getElementById('threshold').value;
+
+  const params = new URLSearchParams();
+  params.set('profile', profile);
+  params.set('metric', metric);
+  params.set('threshold', parseFloat(threshold).toFixed(2));
+
+  const newHash = '#' + params.toString();
+  try {
+    // Attempt to update without cluttering the back button history.
+    window.history.replaceState(null, null, newHash);
+  } catch (err) {
+    // Fallback for strict file:// origins.
+    window.location.hash = newHash;
+  }
+}
+
 (async () => {
   const slider = document.getElementById('threshold');
   const thresholdVal = document.getElementById('threshold-val');
+  const fileSelect = document.getElementById('file-select');
+  const metricSelect = document.getElementById('metric-select');
 
-  // Read threshold from URL hash (e.g., #threshold=1.50).
-  const hashMatch = window.location.hash.match(/#threshold=([0-9.]+)/);
-  if (hashMatch) {
-    const parsedVal = parseFloat(hashMatch[1]);
+  // Parse state from URL hash
+  const hashStr = window.location.hash.substring(1);
+  const params = new URLSearchParams(hashStr);
+
+  if (params.has('profile')) {
+    fileSelect.value = params.get('profile');
+  }
+  if (params.has('metric')) {
+    metricSelect.value = params.get('metric');
+  }
+  if (params.has('threshold')) {
+    const parsedVal = parseFloat(params.get('threshold'));
     if (!isNaN(parsedVal)) {
       slider.value = parsedVal;
     }
   }
+
   thresholdVal.innerText = parseFloat(slider.value).toFixed(2);
 
+  // Set initial hash cleanly if it was missing parameters
+  updateURLHash();
+
   // Event listeners.
-  document.getElementById('file-select').addEventListener('change', loadData);
-  document.getElementById('metric-select')
-      .addEventListener('change', updateChart);
+  fileSelect.addEventListener('change', () => {
+    updateURLHash();
+    loadData();
+  });
+
+  metricSelect.addEventListener('change', () => {
+    updateURLHash();
+    updateChart();
+  });
 
   slider.addEventListener('input', e => {
     const val = parseFloat(e.target.value);
     thresholdVal.innerText = val.toFixed(2);
     applyThreshold(val);
-
-    // Update the URL hash to make it shareable.
-    const newHash = '#threshold=' + val.toFixed(2);
-    try {
-      // Attempt to update without cluttering the back button history.
-      window.history.replaceState(null, null, newHash);
-    } catch (err) {
-      // Fallback for strict file:// origins.
-      window.location.hash = newHash;
-    }
+    updateURLHash();
   });
 
   const detailsDiv = document.getElementById('details');
