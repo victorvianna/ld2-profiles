@@ -1,51 +1,91 @@
-<html>
-    <head>
-      <title>Loadline2 profiles</title>
-    </head>
+<!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Ratio-colored Flame Graph</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/d3-flame-graph@4.1.3/dist/d3-flamegraph.css">
+    <style>
+      /* Styling for the dropdowns */
+      select {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-color: #fff;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+
+        /* FIX: Explicit height and adjusted padding */
+        height: 32px;
+        padding: 0 30px 0 12px;
+        box-sizing: border-box;
+        vertical-align: middle; /* Keeps it aligned with the label text */
+
+        font-size: 14px;
+        font-family: inherit;
+        color: #495057;
+        cursor: pointer;
+
+        /* Custom arrow for dropdown */
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23343a40' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+        background-size: 14px;
+      }
+
+      select:focus {
+        outline: none;
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+      }
+
+      /* Tweak label spacing to accommodate the nicer dropdowns */
+      #controls label {
+        margin-right: 5px;
+        vertical-align: middle;
+      }
+
+      body { font-family: sans-serif; margin: 20px; }
+      #controls { margin-top: 15px; padding: 15px; background: #e9ecef; border-radius: 5px; display: inline-block; }
+      #chart { margin-top: 20px; }
+      #details { margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 5px; height: 60px; }
+      .metric-label { font-weight: bold; }
+    </style>
+  </head>
   <body>
-    <p>Chrome version: 146.0.7671.0</p>
-    <p>Device: Pixel 10</p>
-    <p>All processes/threads, no pinning.</p>
+    <div id="controls">
+      <label for="file-select"><strong>Profile:</strong></label>
+      <select id="file-select">
+        <option value="amazon_product">amazon_product</option>
+        <option value="cnn_article">cnn_article</option>
+        <option value="globo_homepage">globo_homepage</option>
+        <option value="google_search_result">google_search_result</option>
+        <option value="wikipedia_article">wikipedia_article</option>
+      </select>
 
-    <a href="amazon_product_cycles_per_instruction.html">amazon_product_cycles_per_instruction</a>
-    </br>
-    <a href="amazon_product_branch_misses_per_kilo_instruction.html">amazon_product_branch_misses_per_kilo_instruction</a>
-    </br>
-    <a href="amazon_product_raw-l2d-cache-lmiss-rd_per_kilo_instruction.html">amazon_product_raw-l2d-cache-lmiss-rd_per_kilo_instruction.html</a>
-    </br>
-    </br>
+      <label for="metric-select" style="margin-left: 15px;"><strong>Metric:</strong></label>
+      <select id="metric-select">
+        <option value="cpu-cycles">cpu-cycles</option>
+        <option value="branch-misses">branch-misses</option>
+        <option value="raw-l1d-cache-lmiss-rd">raw-l1d-cache-lmiss-rd</option>
+        <option value="raw-l1i-cache-lmiss">raw-l1i-cache-lmiss</option>
+        <option value="raw-l2d-cache-lmiss-rd">raw-l2d-cache-lmiss-rd</option>
+        <option value="raw-l3d-cache-lmiss-rd">raw-l3d-cache-lmiss-rd</option>
+        <option value="raw-ll-cache-miss-rd">raw-ll-cache-miss-rd</option>
+      </select>
+      <br><br>
 
-    <a href="cnn_article_cycles_per_instruction.html">cnn_article_cycles_per_instruction</a>
-    </br>
-    <a href="cnn_article_branch_misses_per_kilo_instruction.html">cnn_article_branch_misses_per_kilo_instruction</a>
-    </br>
-    <a href="cnn_article_raw-l2d-cache-lmiss-rd_per_kilo_instruction.html">cnn_article_raw-l2d-cache-lmiss-rd_per_kilo_instruction.html</a>
-    </br>
-    </br>
+      <label for="threshold"><strong>Highlight Ratio >= <span id="threshold-val">0.00</span></strong></label>
+      <br>
+      <input type="range" id="threshold" min="0" max="100" value="0" step="0.1" style="width: 300px; margin-top: 10px;">
+      <div>Darker color = Higher rate (Max observed: <span id="max-label">...</span>). Gray = N/A.</div>
+    </div>
 
-    <a href="globo_homepage_cycles_per_instruction.html">globo_homepage_cycles_per_instruction</a>
-    </br>
-    <a href="globo_homepage_branch_misses_per_kilo_instruction.html">globo_homepage_branch_misses_per_kilo_instruction</a>
-    </br>
-    <a href="globo_homepage_raw-l2d-cache-lmiss-rd_per_kilo_instruction.html">globo_homepage_raw-l2d-cache-lmiss-rd_per_kilo_instruction.html</a>
-    </br>
-    </br>
+    <p>Hover over a frame for details.</p>
+    <div id="details"></div>
+    <div id="chart"></div>
 
-    <a href="google_search_result_cycles_per_instruction.html">google_search_result_cycles_per_instruction</a>
-    </br>
-    <a href="google_search_result_branch_misses_per_kilo_instruction.html">google_search_result_branch_misses_per_kilo_instruction</a>
-    </br>
-    <a href="google_search_result_raw-l2d-cache-lmiss-rd_per_kilo_instruction.html">google_search_result_raw-l2d-cache-lmiss-rd_per_kilo_instruction.html</a>
-    </br>
-    </br>
-
-    <a href="wikipedia_article_cycles_per_instruction.html">wikipedia_article_cycles_per_instruction</a>
-    </br>
-    <a href="wikipedia_article_branch_misses_per_kilo_instruction.html">wikipedia_article_branch_misses_per_kilo_instruction</a>
-    </br>
-    <a href="wikipedia_article_raw-l2d-cache-lmiss-rd_per_kilo_instruction.html">wikipedia_article_raw-l2d-cache-lmiss-rd_per_kilo_instruction.html</a>
-    </br>
-    </br>
+    <script type="text/javascript" src="https://d3js.org/d3.v7.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/d3-flame-graph@4.1.3/dist/d3-flamegraph.min.js"></script>
+    <script type="text/javascript" src="index.js"></script>
   </body>
-</html>
-
+  </html>
