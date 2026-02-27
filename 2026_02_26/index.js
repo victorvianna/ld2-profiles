@@ -83,7 +83,7 @@ function updateChart() {
 
 async function loadData() {
   const file = document.getElementById('file-select').value;
-  const response = await fetch(`./out_profiling_ld2/${file}.json`);
+  const response = await fetch(`./${file}.json`);
 
   if (!response.ok) {
     console.error(`HTTP error! status: ${response.status}`);
